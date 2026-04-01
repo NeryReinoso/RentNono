@@ -3,7 +3,7 @@ include("database/publicaciones.php");
 include("database/session.php");
 include("login.php"); 
 
-// Verificar si el usuario está logueado como visitante
+// Verificar si el usuario está logueado como visitante o no
 $es_visitante = isset($_SESSION['rol']) && $_SESSION['rol'] === 'visitante';
 $usuario_id = $_SESSION['id'] ?? null;
 ?>

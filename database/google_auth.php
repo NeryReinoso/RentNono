@@ -3,6 +3,7 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+//Esas variables no hay que subir
 // Configuración de Google OAuth
 $clientID = getenv('GOOGLE_CLIENT_ID');
 $clientSecret = getenv('GOOGLE_CLIENT_SECRET');

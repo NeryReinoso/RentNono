@@ -1,26 +1,18 @@
 <?php
-ob_start();
-include("database/session.php");
-include("database/publicaciones.php");
-include("login.php");
+include("../database/session.php");
+include("../database/publicaciones.php");
 
-if (isset($_SESSION['rol'])) {
-    if ($_SESSION['rol'] === 'visitante') {
-        header("Location: usuario_visitante/ixusuario.php");
-        exit;
-    } elseif ($_SESSION['rol'] === 'propietario') {
-        header("Location: usuario_propietario/index_propietario.php");
-        exit;
-    }
-}
-
-// Verificar si el usuario está logueado como visitante
 $es_visitante = isset($_SESSION['rol']) && $_SESSION['rol'] === 'visitante';
 $usuario_id = $_SESSION['id'] ?? null;
 
 // Para la sección de publicaciones más visitadas, necesitamos verificar favoritos
-include("database/conexion.php");
-ob_end_flush();
+include("../database/conexion.php");
+
+// Si el usuario no está logueado como visitante, redirigir al login
+if (!isset($_SESSION['id']) || $_SESSION['rol'] !== 'visitante') {
+    header("Location: ../index.php");
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -28,85 +20,40 @@ ob_end_flush();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RentNono | Inicio</title>
-    <link rel="stylesheet" href="estilos/estilo.css">
-    <link rel="stylesheet" href="estilos/publicaciones.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <title>RentNono | Visitante</title>
+    <link rel="stylesheet" href="../estilos/estilo.css">
+    <link rel="stylesheet" href="../estilos/publicaciones.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@700&display=swap" rel="stylesheet">
-    <style>
-        /* Estilo para el botón filtrar - color VERDE */
-        .btn-filtrar, 
-        button[id="btnFiltrar"] {
-            background-color: #4CAF50 !important;  /* Verde */
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s;
-        }
-        
-        .btn-filtrar:hover,
-        button[id="btnFiltrar"]:hover {
-            background-color: #45a049 !important;  /* Verde más oscuro */
-        }
-        
-        /* Estilo para el botón reiniciar */
-        .btn-reset,
-        button[id="btnReset"] {
-            background-color: #777 !important;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s;
-        }
-        
-        .btn-reset:hover,
-        button[id="btnReset"]:hover {
-            background-color: #666 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://kit.fontawesome.com/a2d9a66f09.js" crossorigin="anonymous"></script>
 </head>
 <body>
+
+    <!-- BARRA DE NAVEGACION PRINCIPAL -->
     <header class="main-header">
         <div class="container header-content">
             <h1 class="site-logo">
-                <?php if(isset($_SESSION['nombre'])): ?>
-                        <a href="index.php">Bienvenido, <?php echo htmlspecialchars($_SESSION['nombre']); ?></a>
-                    <?php else: ?>
-                        <a href="index.php">RentNono</a>
-                    <?php endif; ?> 
+                <a href="ixusuario.php">Bienvenido, <?php echo htmlspecialchars($_SESSION['nombre']); ?></a>
             </h1>
 
             <nav class="main-nav">
-                    <ul>
-                        <li><b href="#" class="btn-primary-small">Inicio</b></li>
-                        <li><a href="explorador.php">Explorar Propiedades</a></li>
-                        
-                        <!-- NOMBRE DE USUARIO O BOTON INICIAR SESION-->
-                        <?php if(isset($_SESSION['nombre'])): ?>
-                            <li><a href="database/logout.php">Cerrar sesión</a></li>
-                        <?php else: ?>
-                            <a id="abrirLogin" class="btn-iniciar-sesion">Iniciar sesión</a>
-                        <?php endif; ?>
-                    </ul>
+                <ul>
+                    <li><b class="btn-primary-small" href="ixusuario.php">Inicio</b></li>
+                    <li><a href="erusuario.php">Explorar Propiedades</a></li>
+                    <li><a href="mis_favoritos.php">Mis Favoritos</a></li>
+                    <li><a href="../database/logout.php">Cerrar sesión</a></li>
+                </ul>
             </nav>
         </div>
     </header>
-    
+ 
     <main>
         <!--SECCION DE PRESENTACION-->
         <section class="hero-section">
             <div class="hero-text-content">
                 <h2>Encontrá tu hogar en Nonogasta</h2>
                 <p>Una plataforma simple e intuitiva para que alquiles y des en alquiler tus objetos y propiedades de 
-                    forma segura y eficiente.</p>
-            </div>
-        </section>
+                    forma segura y eficiente.</p>              
         
         <!-- 🔍 BUSCADOR POR PRECIO -->
         <section class="buscador-precio container" style="margin-top:30px;">
@@ -115,19 +62,41 @@ ob_end_flush();
             <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
                 <div>
                     <label>Precio mínimo</label>
-                    <input type="number" id="precio_min" placeholder="Ej: 100000" style="padding:8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="number" id="precio_min" placeholder="Ej: 100000" style="padding:8px;">
                 </div>
 
                 <div>
                     <label>Precio máximo</label>
-                    <input type="number" id="precio_max" placeholder="Ej: 300000" style="padding:8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="number" id="precio_max" placeholder="Ej: 300000" style="padding:8px;">
                 </div>
-                
-                <button id="btnFiltrar" class="btn-filtrar" style="background-color: #4CAF50; padding:10px 20px; cursor:pointer; border:none; color:white; border-radius:5px;">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <button id="btnFiltrar" style="padding:10px 20px; cursor:pointer; background: #82b16d; border:none; color:white; border-radius:5px;">
                     Aplicar filtros
                 </button>
 
-                <button id="btnReset" class="btn-reset" style="padding:10px 20px; cursor:pointer; background:#777; border:none; color:white; border-radius:5px;">
+                <button id="btnReset" style="padding:10px 20px; cursor:pointer; background:#777; border:none; color:white; border-radius:5px;">
                     Reiniciar
                 </button>
             </div>
@@ -140,9 +109,9 @@ ob_end_flush();
                 No existen publicaciones en ese rango de precio.
             </p>
         </section>
+        </section>
     </main>
     
-    <!--PIE DE PAGINA-->
     <footer class="main-footer">
         <div class="container footer-content">
             <p>&copy; 2025 Rentnono. Todos los derechos reservados.</p>
@@ -153,10 +122,6 @@ ob_end_flush();
         </div>
     </footer>
     
-    <!--HABILITA VENTANAS FLOTANTES DE LOGIN Y REGISTRO-->
-    <script src="script/login.js"></script>
-    <script src="script/infopub.js"></script>
-
     <script>
         // Variables para control de sesión
         const estaLogueado = <?php echo isset($_SESSION['id']) ? 'true' : 'false'; ?>;
@@ -182,13 +147,7 @@ ob_end_flush();
                     
                     const idPublicacion = this.dataset.id;
                     
-                    if (!estaLogueado || !esVisitante) {
-                        // Abrir ventana de login si no está logueado
-                        if (typeof window.abrirLogin === 'function') {
-                            window.abrirLogin();
-                        }
-                        return;
-                    }
+                    // El usuario ya está logueado como visitante, así que puede agregar favoritos
                     
                     // Toggle visual del botón
                     this.classList.toggle('active');
@@ -205,7 +164,7 @@ ob_end_flush();
                     }
                     
                     // Enviar petición al servidor
-                    fetch('database/favoritos.php', {
+                    fetch('../database/favoritos.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -227,7 +186,7 @@ ob_end_flush();
                             
                             if (data.accion === 'agregado') {
                                 if (favCount) {
-                                    const currentCount = parseInt(favCount.textContent.match(/\d+/)[0]);
+                                    const currentCount = parseInt(favCount.textContent.match(/\d+/)[0] || 0);
                                     favCount.innerHTML = `<i class="fas fa-heart"></i> ${currentCount + 1}`;
                                 } else {
                                     // Crear contador si no existe
@@ -238,7 +197,7 @@ ob_end_flush();
                                 }
                             } else {
                                 if (favCount) {
-                                    const currentCount = parseInt(favCount.textContent.match(/\d+/)[0]);
+                                    const currentCount = parseInt(favCount.textContent.match(/\d+/)[0] || 0);
                                     if (currentCount - 1 <= 0) {
                                         favCount.remove();
                                     } else {
@@ -273,9 +232,11 @@ ob_end_flush();
             if (precioMin.value) params.push("precio_min=" + encodeURIComponent(precioMin.value));
             if (precioMax.value) params.push("precio_max=" + encodeURIComponent(precioMax.value));
 
-            let url = "database/publicaciones.php?ajax=1&" + params.join("&");
+            let url = "../database/publicaciones.php?ajax=1&" + params.join("&");
 
-            fetch(url)
+            fetch(url, {
+                credentials: 'include'
+            })
                 .then(res => res.text())
                 .then(html => {
                     gridIndex.innerHTML = html;
@@ -313,7 +274,7 @@ ob_end_flush();
             });
         }
 
-        // ▶️ Agregar eventos a los favoritos de la sección estática
+        // ▶️ Cargar al iniciar
         document.addEventListener("DOMContentLoaded", function() {
             agregarEventosFavoritos();
             
@@ -324,31 +285,5 @@ ob_end_flush();
         });
     </script>
 
-    <!-- Mensaje de éxito al registrarse -->
-    <div id="mensajeExito" class="mensaje-flotante" style="display: none; background: #4CAF50;"></div>
-
-    <script>
-    // Mostrar mensaje de éxito al registrarse
-    window.addEventListener("DOMContentLoaded", function() {
-        const mensajeExito = document.getElementById("mensajeExito");
-        
-        <?php if (isset($_GET['registro']) && $_GET['registro'] === "ok"): ?>
-            const tipo = "<?php echo $_GET['tipo'] ?? 'usuario'; ?>";
-            const mensaje = tipo === 'propietario' 
-                ? '¡Registro como propietario exitoso! Revisa tu correo para crear tu contraseña.'
-                : '¡Registro como visitante exitoso! Revisa tu correo para crear tu contraseña.';
-            
-            mensajeExito.innerHTML = `
-                <i class="fas fa-check-circle" style="margin-right: 10px;"></i>
-                ${mensaje}
-            `;
-            mensajeExito.style.display = "flex";
-            
-            setTimeout(() => {
-                mensajeExito.style.display = "none";
-            }, 5000);
-        <?php endif; ?>
-    });
-    </script>
 </body>
 </html>
